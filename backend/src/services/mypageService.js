@@ -9,15 +9,6 @@ class UserService {
     try {
         const connection = await pool.getConnection();
   
-        // 사용자가 받은 좋아요 수를 계산하는 쿼리
-        const [likesReceivedRows] = await connection.query(
-            "SELECT COUNT(*) AS likes_received " +
-            "FROM post " +
-            "JOIN post_likes ON post.post_id = post_likes.post_id " +
-            "WHERE post.user_id = ?",
-            [user_id]
-        );
-  
         // 사용자 정보를 가져오는 쿼리
         const [userRows] = await connection.query(
             "SELECT u.user_id, u.user_nickname AS nickname, u.user_email AS email, u.user_password AS password, u.user_image AS profile_picture, u.user_intro AS introduction, u.user_contribute AS contribute " +
@@ -40,7 +31,6 @@ class UserService {
             profile_picture: `${userRows[0].profile_picture}`, // 이미지 경로 생성
             introduction: userRows[0].introduction,
             contribute: userRows[0].contribute,
-            likes_received: likesReceivedRows[0].likes_received // 사용자가 받은 좋아요 수
         };
   
         return userInfo;
@@ -162,36 +152,6 @@ async modifyUserImage(user_id, imageFileName) {
       throw error;
     }
   }
-  
-
-async getUserPosts(user_id) {
-    try {
-        const connection = await pool.getConnection();
-
-        const [posts] = await connection.query(
-            `SELECT p.post_id, p.post_title, p.language, p.post_date, u.user_id, u.user_nickname,u.user_image AS profile_picture
-             FROM post p
-             JOIN user u ON p.user_id = u.user_id
-             WHERE p.user_id = ? order by p.post_date DESC`,
-            [user_id]
-        );
-
-        connection.release();
-
-        return posts.map(post => ({
-            post_id: post.post_id,
-            post_title: post.post_title,
-            language: post.language,
-            post_date: post.post_date,
-            user_id: post.user_id,
-            user_nickname: post.user_nickname,
-            profile_picture: `${post.profile_picture}`
-        }));
-    } catch (error) {
-        console.error("사용자 게시물을 가져오는 중 에러 발생:", error);
-        throw error;
-    }
-}
 
 }
 
